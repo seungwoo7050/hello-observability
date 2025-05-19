@@ -1,0 +1,121 @@
+version: '3'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - observability-net
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml
+    networks:
+      - observability-net
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/config.yml
+    networks:
+      - observability-net
+    depends_on:
+      - loki
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # UI
+      - "14268:14268"  # HTTP
+      - "6831:6831/udp"  # Agent
+    networks:
+      - observability-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - observability-net
+    depends_on:
+      - prometheus
+      - loki
+      - jaeger
+
+  product-service:
+    build: ./services/product-service
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6831
+    networks:
+      - observability-net
+
+  inventory-service:
+    build: ./services/inventory-service
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6831
+    networks:
+      - observability-net
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6831
+      - PRODUCT_SERVICE_URL=http://product-service:8081
+      - INVENTORY_SERVICE_URL=http://inventory-service:8082
+    networks:
+      - observability-net
+    depends_on:
+      - product-service
+      - inventory-service
+
+  gateway-service:
+    build: ./services/gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6831
+      - PRODUCT_SERVICE_URL=http://product-service:8081
+      - INVENTORY_SERVICE_URL=http://inventory-service:8082
+      - ORDER_SERVICE_URL=http://order-service:8083
+    networks:
+      - observability-net
+    depends_on:
+      - product-service
+      - inventory-service
+      - order-service
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3001:3001"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    networks:
+      - observability-net
+    depends_on:
+      - gateway-service
+
+networks:
+  observability-net:
