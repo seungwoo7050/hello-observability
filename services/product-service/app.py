@@ -47,9 +47,9 @@ FlaskInstrumentor().instrument_app(app)
 
 # 제품 데이터 (데모용 인메모리 저장소)
 products = [
-    {"id": str(uuid.uuid4()), "name": "Product 1", "price": 10.99},
-    {"id": str(uuid.uuid4()), "name": "Product 2", "price": 29.99},
-    {"id": str(uuid.uuid4()), "name": "Product 3", "price": 5.49}
+    {"id": "product1", "name": "Product 1", "price": 10.99},
+    {"id": "product2", "name": "Product 2", "price": 29.99},
+    {"id": "product3", "name": "Product 3", "price": 5.49}
 ]
 
 @app.route('/health', methods=['GET'])
