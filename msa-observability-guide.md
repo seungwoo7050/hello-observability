@@ -407,8 +407,3 @@ Hello Observability 프로젝트는 마이크로서비스 아키텍처에서 관
 - [OpenTelemetry 공식 문서](https://opentelemetry.io/docs/)
 - [Grafana 대시보드 가이드](https://grafana.com/docs/grafana/latest/dashboards/)
 - [마이크로서비스 패턴 (Chris Richardson)](https://microservices.io/patterns/index.html)
-
----
-
-문서 작성자: [당신의 이름]  
-최종 업데이트: [날짜]
